@@ -1,75 +1,25 @@
 <template>
-  <div class="hello">
+  <div class="home">
     <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-    </p>
-    <p>{{ count }}</p>
-    <button @click="generateTeams">Generate Teams</button>
-    <button @click="startSimulation">Simulate</button>
+    <div class="instructions-container">
+      <h2>Instructions</h2>
+      <p v-for="(instruction) in instructions" :key="instruction.step">
+        {{ instruction.step }}. {{ instruction.text }}
+      </p>
+    </div>
+    <div class="button-container">
+      <v-btn @click="generateTeams" width="200">Generate Teams</v-btn>
+      <v-btn @click="startSimulation" :disabled="isSimulationFinished" width="200">Start Simulation</v-btn>
+    </div>
     <div v-if="isLoading">
       <p>Teams are loading ...</p>
     </div>
-    <div v-if="!isLoading">
-      <h2 v-if="isSimulationFinished">Winners</h2>
-      <div class="teams-container">
-        <div class="team" v-if="teamAIsAlive">
-          <h2>Team A</h2>
-          <div class="hero-cards-container">
-            <div v-for="(hero, index) in teamA.heros" :key="index" class="hero-card">
-              <h3>{{ hero.name }}</h3>
-              <p>HP: {{ hero.hp }}</p>
-              <p>Attacks:</p>
-              <ul>
-                <li v-for="(attack, index) in hero.attacks" :key="index">
-                  {{ attack }}
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <p v-if="!isSimulationFinished">V/S</p>
-        <div class="team" v-if="teamBIsAlive">
-          <h2>Team B</h2>
-          <div class="hero-cards-container" >
-            <div v-for="(hero, index) in teamB.heros" :key="index" class="hero-card">
-              <h3>{{ hero.name }}</h3>
-              <p>Attacks:</p>
-              <ul>
-                <li v-for="(attack, index) in hero.attacks" :key="index">
-                  {{ attack }}
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div v-if="!isLoading && !isSimulationFinished" class="teams-container">
+      <Team :team="teamA" teamName="Team A" />
+      <p>V/S</p>
+      <Team :team="teamB" teamName="Team B" />
     </div>
-    <!-- <div v-if="isSimulationFinished && !isLoading">
-      <table>
-        <thead>
-          <tr>
-            <th>Turn</th>
-            <th>Attacker</th>
-            <th>Defender</th>
-            <th>Attack Type</th>
-            <th>Damage</th>
-            <th>Remaining HP</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(log, index) in battleLog" :key="index">
-            <td>{{ log.turn }}</td>
-            <td>{{ log.attacker }}</td>
-            <td>{{ log.defender }}</td>
-            <td>{{ log.attackType }}</td>
-            <td>{{ log.damage }}</td>
-            <td>{{ log.remainingHp }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div> -->
+    <Dashboard v-if="isSimulationFinished && !isLoading" :winner="winnerTeam"/>
   </div>
 </template>
 
@@ -77,14 +27,31 @@
 import { Options, Vue } from 'vue-class-component'
 import { useGlobalStore } from '@/stores/globalStore'
 import { useBattleStore } from '@/stores/battleStore'
+import Dashboard from './Dashboard.vue'
+import Team from './teams/Team.vue'
 
 @Options({
+  components: {
+    Dashboard,
+    Team
+  },
   props: {
     msg: String
   }
 })
 export default class Home extends Vue {
   msg!: string
+
+  public instructions = [
+    {
+      step: 1,
+      text: 'Generate teams by clicking on the "Generate Teams" button.'
+    },
+    {
+      step: 2,
+      text: 'Click "Start simulation" to simulate the battle.'
+    }
+  ]
 
   get globalStore () {
     return useGlobalStore()
@@ -114,6 +81,14 @@ export default class Home extends Vue {
     return this.globalStore.teamB.heros.length > 0
   }
 
+  get winnerTeam () {
+    if (!this.teamAIsAlive && this.teamBIsAlive) {
+      return 'Team B'
+    } else if (!this.teamBIsAlive && this.teamAIsAlive) {
+      return 'Team A'
+    }
+  }
+
   get isSimulationFinished () {
     return !this.teamAIsAlive || !this.teamBIsAlive
   }
@@ -122,9 +97,7 @@ export default class Home extends Vue {
     return this.battleStore.battleLog
   }
 
-  // Opcionalmente, puedes usar los métodos del ciclo de vida para trabajar con el store
   created () {
-    console.log('Home mounted')
     try {
       this.globalStore.createTeams()
     } catch (error) {
@@ -150,64 +123,33 @@ export default class Home extends Vue {
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h3 {
-  margin: 10px 0 0;
+h2 {
+  margin: 20px 0 0;
 }
 ul {
   list-style-type: none;
   padding: 0;
 }
-li {
-  display: inline-block;
-  margin: 0 10px;
+
+.instructions-container {
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
-a {
-  color: #462b81;
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.button-container .v-btn:not(:first-child) {
+  margin-left: 10px;
 }
 
 .teams-container {
   display: flex;
   justify-content: space-evenly;
-}
-
-.team {
-  width: 45%; /* Adjust as needed */
-}
-
-.hero-cards-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
-  padding: 20px;
-  background-color: #9fa1b738;
-  border-radius: 12px;
-  margin-right: 20px;
-  margin-left: 20px;
-}
-
-.hero-card {
-  background: #fff;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-  margin: 10px 20px 10px 20px;
-  width: 100px;
-  height: 200px;
-  padding: 10px;
-}
-
-table {
-  width: 60%;
-  border-collapse: collapse;
-}
-
-table, th, td {
-  border: 1px solid black;
-}
-
-th, td {
-  padding: 15px;
-  text-align: left;
 }
 </style>
