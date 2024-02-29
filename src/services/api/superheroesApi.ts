@@ -15,6 +15,6 @@ export const fetchSuperheroById = async (id: number) => {
     return { ok: true, hero: response.data }
   } catch (error) {
     console.error('Error fetching superhero:', error)
-    return { ok: false, error } // Propaga el error para manejarlo en el componente
+    return { ok: false, error }
   }
 }

@@ -49,6 +49,10 @@ export default class Home extends Vue {
     },
     {
       step: 2,
+      text: 'You can click on the Hero cards to see their stats.'
+    },
+    {
+      step: 3,
       text: 'Click "Start simulation" to simulate the battle.'
     }
   ]
